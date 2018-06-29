@@ -1,14 +1,15 @@
 package me.vukas;
 
+import static org.hibernate.jpa.QueryHints.HINT_FETCH_SIZE;
+
+import java.util.stream.Stream;
+
+import javax.persistence.QueryHint;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.stereotype.Repository;
-
-import javax.persistence.QueryHint;
-import java.util.stream.Stream;
-
-import static org.hibernate.jpa.QueryHints.HINT_FETCH_SIZE;
 
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Integer> {
