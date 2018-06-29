@@ -68,7 +68,7 @@ public class Runner implements CommandLineRunner {
                 return rch;
             });
             zapamti.setPojavljivanja(zapamti.getPojavljivanja() + 1);
-            rijecRepository.saveN(zapamti);
+            rijecRepository.saveN(zapamti); //!!!!!!!! IPAK NE RADI NA KRAJU KADA SE PUSTI DUZE DA RADI
 
             System.out.println("Rijec :" + zapamti.getRijec() + " ; ponavljanja: " + zapamti.getPojavljivanja());
         }
