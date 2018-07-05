@@ -1,5 +1,24 @@
 spring:
   datasource:
-    url: jdbc:mysql://10.10.121.137:33306/crawled?useUnicode=yes&characterEncoding=UTF-8
+    url: jdbc:mysql://10.10.121.137:33306/crawled?useUnicode=yes&characterEncoding=UTF-8&useServerPrepStmts=false&rewriteBatchedStatements=true
     username: root
     password: 123456
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5Dialect
+        connection:
+          characterEncoding: utf-8
+          CharSet: utf-8
+          useUnicode: true
+        id:
+          new_generator_mappings: false
+        order_inserts: true
+        order_updates: true
+        jdbc:
+          batch_size: 1000
+          batch_versioned_data: true
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type: TRACE

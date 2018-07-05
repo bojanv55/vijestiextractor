@@ -1,9 +1,16 @@
 package me.vukas;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 
-public interface RijecRepository extends JpaRepository<Rijec, Integer> {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface RijecRepository extends JpaRepository<Rijec, String>, RijecCustomRepository {
+    String KEY = "rijec";
+
+    //@Cacheable(KEY)
     Optional<Rijec> findByRijec(String rijec);
+
+    //@CachePut(KEY)
+    @Override
+    <S extends Rijec> S save(S s);
 }
