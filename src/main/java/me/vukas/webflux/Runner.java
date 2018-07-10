@@ -1,17 +1,25 @@
 package me.vukas.webflux;
 
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutException;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.test.StepVerifier;
+import reactor.retry.Retry;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
 public class Runner implements CommandLineRunner {
@@ -51,7 +59,8 @@ public class Runner implements CommandLineRunner {
                 .delaySubscription(Duration.ofMillis(250)) //nemoj odma da emitujes poslije subscr
                 .delayElements(Duration.ofMillis(500)); //emitovanje je odlozeno za po 500 ms
 
-        fi1.mergeWith(fi2).subscribe(System.out::println);
+        //fi1.mergeWith(fi2).subscribe(System.out::println);
+        Flux.merge(fi1, fi2).subscribe(System.out::println);
 
         Flux<Integer> fi21 = Flux.range(99,10);
         Flux<Integer> fi22 = Flux.range(120,10);
@@ -102,5 +111,30 @@ public class Runner implements CommandLineRunner {
 
         Flux.just("x", "y", "z", "y", "j", "r", "d").any(x -> x.equals("x")).subscribe(System.out::println);
         Flux.just("x", "y", "z", "y", "j", "r", "d").any(x -> x.equals("g")).subscribe(System.out::println);
+
+        //WEB CLIENT
+
+        ReactorClientHttpConnector connector = new ReactorClientHttpConnector(opt -> opt
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 30_000)	//IOException if cannot connect in X MILLIS, 30sec default
+            .compression(true)
+            .afterNettyContextInit(ctx -> {
+                ctx.addHandlerLast(new ReadTimeoutHandler(30_000 /*5000*/, TimeUnit.MILLISECONDS));	//RuntimeException - Timeout if no data in X MILLIS from server
+            })
+        );
+
+        WebClient wc = WebClient.builder()
+            .clientConnector(connector)
+            .build();
+
+        wc.get().uri("http://10.10.121.178:9022/matches")
+            .accept(MediaType.APPLICATION_JSON_UTF8)
+            .retrieve()
+            .bodyToFlux(String.class)
+            .retryWhen(
+                Retry.anyOf(IOException.class, ReadTimeoutException.class)
+                    .exponentialBackoff(Duration.ofMillis(100), Duration.ofSeconds(60))
+                    .retryMax(Integer.MAX_VALUE)
+            )
+            .subscribe(System.out::println);
     }
 }
