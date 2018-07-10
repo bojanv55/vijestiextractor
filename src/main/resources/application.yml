@@ -4,3 +4,10 @@ spring:
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    cassandra:
+      contact-points:
+      - 10.10.121.137
+      port: 9042
+      keyspace-name: tacocloud
+      schema-action: recreate_drop_unused

@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.retry.Retry;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
 public class Runner implements CommandLineRunner {
+
+    @Autowired
+    private UnpackRepository unpackRepository;
+
     @Override
     public void run(String... args) throws Exception {
 
@@ -125,7 +130,7 @@ public class Runner implements CommandLineRunner {
             .clientConnector(connector)
             .build();
 
-        wc.get().uri("http://jsonplaceholder.typicode.com/posts")
+    Flux<Unpack> cf = wc.get().uri("http://jsonplaceholder.typicode.com/posts")
             .retrieve()
             .bodyToFlux(Unpack.class)
             .retryWhen(
@@ -133,7 +138,12 @@ public class Runner implements CommandLineRunner {
                     .exponentialBackoff(Duration.ofMillis(100), Duration.ofSeconds(60))
                     .retryMax(Integer.MAX_VALUE)
             )
-            .map(Unpack::getTitle)
+            .publish().autoConnect(2);
+
+            cf.subscribe(x -> unpackRepository.save(x));
+
+            cf.map(Unpack::getTitle)
             .subscribe(System.out::println);
+
     }
 }
