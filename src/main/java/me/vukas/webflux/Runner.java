@@ -16,7 +16,6 @@ import reactor.core.scheduler.Schedulers;
 import reactor.retry.Retry;
 
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -126,15 +125,15 @@ public class Runner implements CommandLineRunner {
             .clientConnector(connector)
             .build();
 
-        wc.get().uri("http://10.10.121.178:9022/matches")
-            .accept(MediaType.APPLICATION_JSON_UTF8)
+        wc.get().uri("http://jsonplaceholder.typicode.com/posts")
             .retrieve()
-            .bodyToFlux(String.class)
+            .bodyToFlux(Unpack.class)
             .retryWhen(
                 Retry.anyOf(IOException.class, ReadTimeoutException.class)
                     .exponentialBackoff(Duration.ofMillis(100), Duration.ofSeconds(60))
                     .retryMax(Integer.MAX_VALUE)
             )
+            .map(Unpack::getTitle)
             .subscribe(System.out::println);
     }
 }
